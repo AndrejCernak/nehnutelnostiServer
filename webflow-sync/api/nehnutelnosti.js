@@ -1,9 +1,10 @@
-import clients from "./clients.json" assert { type: "json" };
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Only POST requests allowed" });
   }
+
+  // dynamicky import JSON (funguje aj na Verceli)
+  const clients = await import("./clients.json").then(m => m.default);
 
   const { apiKey, nazov, cena, popis, obrazok } = req.body;
 
