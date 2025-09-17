@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -6,7 +7,8 @@ export default async function handler(req, res) {
   }
 
   // načítaj clients.json
-  const clients = JSON.parse(fs.readFileSync("./clients.json", "utf-8"));
+  const clientsPath = path.resolve(process.cwd(), "webflow-sync/clients.json");
+  const clients = JSON.parse(fs.readFileSync(clientsPath, "utf-8"));
 
   const { apiKey, nazov, cena, popis, obrazok } = req.body;
 
@@ -42,9 +44,8 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // 🚨 tu pridáme kontrolu
+    // ak Webflow vráti chybu → pošli ju rovno naspäť
     if (!response.ok) {
-      console.error("Webflow API error:", data);
       return res.status(response.status).json({
         message: "Webflow API error",
         details: data
@@ -54,7 +55,9 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
 
   } catch (err) {
-    console.error("Server error:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message
+    });
   }
 }
