@@ -22,8 +22,11 @@ export default async function handler(req, res) {
       isArchived: false,
       fieldData: {
         name: nazov,
-        slug: nazov.toLowerCase().replace(/\s+/g, "-"),
-        cena,
+        slug: nazov
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // odstráni diakritiku
+        .replace(/[^a-z0-9]+/g, "-") // nahradí všetko iné ako a-z0-9 pomlčkou
+        .replace(/^-+|-+$/g, ""),    // odstráni pomlčky na začiatku a konci        cena,
         popis,
         obrazok
       }
