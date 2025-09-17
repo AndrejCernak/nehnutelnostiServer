@@ -6,19 +6,33 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Only POST requests allowed" });
   }
 
-  // načítaj clients.json
-  const clientsPath = path.resolve(process.cwd(), "webflow-sync/clients.json");
-  const clients = JSON.parse(fs.readFileSync(clientsPath, "utf-8"));
-
-  const { apiKey, nazov, cena, popis, obrazok } = req.body;
-
-  if (!apiKey || !clients[apiKey]) {
-    return res.status(401).json({ message: "Neplatný API kľúč" });
-  }
-
-  const client = clients[apiKey];
-
   try {
+    // správna cesta na Verceli
+    const clientsPath = path.resolve(process.cwd(), "clients.json");
+    const clientsRaw = fs.readFileSync(clientsPath, "utf-8");
+
+    const clients = JSON.parse(clientsRaw);
+
+    const { apiKey, nazov, cena, popis, obrazok } = req.body;
+
+    if (!apiKey || !clients[apiKey]) {
+      return res.status(401).json({ message: "Neplatný API kľúč" });
+    }
+
+    const client = clients[apiKey];
+
+    const payload = {
+      isDraft: false,
+      isArchived: false,
+      fieldData: {
+        name: nazov,
+        slug: nazov.toLowerCase().replace(/\s+/g, "-"),
+        cena,
+        popis,
+        obrazok
+      }
+    };
+
     const response = await fetch(
       `https://api.webflow.com/v2/sites/${client.siteId}/collections/${client.collectionId}/items`,
       {
@@ -28,23 +42,12 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-        body: JSON.stringify({
-          isDraft: false,
-          isArchived: false,
-          fieldData: {
-            name: nazov,
-            slug: nazov.toLowerCase().replace(/\s+/g, "-"),
-            cena,
-            popis,
-            obrazok
-          }
-        })
+        body: JSON.stringify(payload)
       }
     );
 
     const data = await response.json();
 
-    // ak Webflow vráti chybu → pošli ju rovno naspäť
     if (!response.ok) {
       return res.status(response.status).json({
         message: "Webflow API error",
@@ -55,9 +58,7 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
 
   } catch (err) {
-    return res.status(500).json({
-      message: "Server error",
-      error: err.message
-    });
+    console.error("Server error:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 }
