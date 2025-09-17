@@ -4,6 +4,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 🔹 LOGOVANIE čo príde z portálu
+    console.log("===== NEW REQUEST FROM NEHNUTELNOSTI.SK =====");
+    console.log("Headers:", req.headers);
+    console.log("Body:", req.body);
+    console.log("============================================");
+
     // načítaj všetkých klientov zo serverových premenných
     const clients = JSON.parse(process.env.CLIENTS_JSON);
 
@@ -23,10 +29,11 @@ export default async function handler(req, res) {
       fieldData: {
         name: nazov,
         slug: nazov
-        .toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // odstráni diakritiku
-        .replace(/[^a-z0-9]+/g, "-") // nahradí všetko iné ako a-z0-9 pomlčkou
-        .replace(/^-+|-+$/g, ""),    // odstráni pomlčky na začiatku a konci        cena,
+          .toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // odstráni diakritiku
+          .replace(/[^a-z0-9]+/g, "-") // nahradí všetko iné ako a-z0-9 pomlčkou
+          .replace(/^-+|-+$/g, ""),    // odstráni pomlčky na začiatku a konci
+        cena,
         popis,
         obrazok
       }
