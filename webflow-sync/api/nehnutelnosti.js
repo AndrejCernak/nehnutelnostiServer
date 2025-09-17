@@ -7,10 +7,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // správna cesta na Verceli
-    const clientsPath = path.resolve(process.cwd(), "clients.json");
+    // správna cesta (o priečinok vyššie z api/)
+    const clientsPath = path.resolve(process.cwd(), "webflow-sync/clients.json");
     const clientsRaw = fs.readFileSync(clientsPath, "utf-8");
-
     const clients = JSON.parse(clientsRaw);
 
     const { apiKey, nazov, cena, popis, obrazok } = req.body;
