@@ -1,25 +1,30 @@
-import clients from "../clients.json" assert { type: "json" };
+import fs from "fs";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ message: "Only POST requests allowed" });
   }
+
+  // načítaj clients.json
+  const clients = JSON.parse(fs.readFileSync("./clients.json", "utf-8"));
 
   const { apiKey, nazov, cena, popis, obrazok } = req.body;
-  const client = clients[apiKey];
 
-  if (!client) {
-    return res.status(403).json({ error: "Neplatný klient" });
+  if (!apiKey || !clients[apiKey]) {
+    return res.status(401).json({ message: "Neplatný API kľúč" });
   }
+
+  const client = clients[apiKey];
 
   try {
     const response = await fetch(
-      `https://api.webflow.com/v2/sites/${client.site_id}/collections/${client.collection_id}/items`,
+      `https://api.webflow.com/v2/sites/${client.siteId}/collections/${client.collectionId}/items`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${client.webflow_token}`,
+          "Authorization": `Bearer ${client.apiToken}`,
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
           isDraft: false,
@@ -27,17 +32,19 @@ export default async function handler(req, res) {
           fieldData: {
             name: nazov,
             slug: nazov.toLowerCase().replace(/\s+/g, "-"),
-            cena: cena,
-            popis: `<p>${popis}</p>`,
-            obrazok: obrazok
+            cena,
+            popis,
+            obrazok
           }
         })
       }
     );
 
-    const result = await response.json();
-    return res.status(200).json(result);
+    const data = await response.json();
+    return res.status(200).json(data);
+
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ message: "Chyba pri ukladaní do Webflow", error: err.message });
   }
 }
