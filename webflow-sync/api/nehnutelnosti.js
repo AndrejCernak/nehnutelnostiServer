@@ -1,14 +1,9 @@
-import fs from "fs";
-import path from "path";
+import clients from "./clients.json" assert { type: "json" };
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Only POST requests allowed" });
   }
-
-  // 🔑 správna cesta k súboru clients.json (v tom istom priečinku ako tento handler)
-  const clientsPath = path.join(process.cwd(), "webflow-sync", "api", "clients.json");
-  const clients = JSON.parse(fs.readFileSync(clientsPath, "utf-8"));
 
   const { apiKey, nazov, cena, popis, obrazok } = req.body;
 
