@@ -41,10 +41,20 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
+
+    // 🚨 tu pridáme kontrolu
+    if (!response.ok) {
+      console.error("Webflow API error:", data);
+      return res.status(response.status).json({
+        message: "Webflow API error",
+        details: data
+      });
+    }
+
     return res.status(200).json(data);
 
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Chyba pri ukladaní do Webflow", error: err.message });
+    console.error("Server error:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 }
