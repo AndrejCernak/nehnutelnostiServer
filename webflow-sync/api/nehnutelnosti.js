@@ -6,56 +6,53 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Only POST requests allowed" });
   }
 
+  // 🔑 správna cesta k súboru clients.json (v tom istom priečinku ako tento handler)
+  const clientsPath = path.join(process.cwd(), "webflow-sync", "api", "clients.json");
+  const clients = JSON.parse(fs.readFileSync(clientsPath, "utf-8"));
+
+  const { apiKey, nazov, cena, popis, obrazok } = req.body;
+
+  if (!apiKey || !clients[apiKey]) {
+    return res.status(401).json({ message: "Neplatný API kľúč" });
+  }
+
+  const client = clients[apiKey];
+
   try {
-    // správna cesta (o priečinok vyššie z api/)
-    const clientsPath = path.resolve(process.cwd(), "webflow-sync/clients.json");
-    const clientsRaw = fs.readFileSync(clientsPath, "utf-8");
-    const clients = JSON.parse(clientsRaw);
-
-    const { apiKey, nazov, cena, popis, obrazok } = req.body;
-
-    if (!apiKey || !clients[apiKey]) {
-      return res.status(401).json({ message: "Neplatný API kľúč" });
-    }
-
-    const client = clients[apiKey];
-
-    const payload = {
-      isDraft: false,
-      isArchived: false,
-      fieldData: {
-        name: nazov,
-        slug: nazov.toLowerCase().replace(/\s+/g, "-"),
-        cena,
-        popis,
-        obrazok
-      }
-    };
-
     const response = await fetch(
       `https://api.webflow.com/v2/sites/${client.siteId}/collections/${client.collectionId}/items`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${client.apiToken}`,
+          Authorization: `Bearer ${client.apiToken}`,
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          Accept: "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          isDraft: false,
+          isArchived: false,
+          fieldData: {
+            name: nazov,
+            slug: nazov.toLowerCase().replace(/\s+/g, "-"),
+            cena,
+            popis,
+            obrazok,
+          },
+        }),
       }
     );
 
     const data = await response.json();
 
     if (!response.ok) {
+      console.error("Webflow API error:", data);
       return res.status(response.status).json({
         message: "Webflow API error",
-        details: data
+        details: data,
       });
     }
 
     return res.status(200).json(data);
-
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
