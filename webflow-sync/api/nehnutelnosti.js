@@ -1,4 +1,4 @@
-import clients from "../clients.json";
+import clients from "../clients.json" assert { type: "json" };
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
